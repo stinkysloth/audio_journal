@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/*
+!build/README.md
+!build/BUILDING.md
+.env
+*.log
+.DS_Store

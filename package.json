@@ -1,0 +1,20 @@
+{
+  "name": "audio-journal",
+  "version": "0.1.0",
+  "description": "A Mac desktop app for audio journaling with local AI and Obsidian integration.",
+  "main": "app/main.js",
+  "scripts": {
+    "start": "concurrently \"npm:electron\" \"npm:react\"",
+    "electron": "wait-on tcp:3000 && electron .",
+    "react": "cd frontend && npm start",
+    "test": "pytest tests/"
+  },
+  "dependencies": {
+    "electron": "^27.0.0",
+    "concurrently": "^8.2.0",
+    "wait-on": "^7.0.1"
+  },
+  "devDependencies": {},
+  "author": "",
+  "license": "MIT"
+}
