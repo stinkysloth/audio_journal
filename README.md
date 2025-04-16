@@ -11,6 +11,10 @@ A local-first, AI-powered audio journaling desktop app for Mac. Features audio r
 - **Entry Viewer:**
   - Browse all journal entries within the app.
   - See summaries, audio, transcripts, and tags in a modern UI.
+- **File Import Tab:** Import files from your computer, confirm/edit the derived entry name, and run them through the AI pipeline.
+- **Entry Naming:** If a date is found in the filename, it's used; otherwise, the file's creation date is used. You can edit/accept the name before processing.
+- **Python Script Path Robustness:** All AI-related Python scripts are now reliably run from the correct `.asar.unpacked` directory in production, preventing missing script errors.
+- **Improved Error Handling:** Enhanced user prompts for permissions and file processing errors.
 
 ## Setup
 

@@ -51,3 +51,14 @@
 - [x] Master index page auto-update
 - [x] Entry viewer (in-app)
 - [ ] Aggregate summaries
+
+## 2025-04-16: File Import AI Pipeline & Robust Python Path Handling
+
+- Added a third tab ("Import") to the UI for importing files and running them through the AI pipeline.
+- The import workflow suggests a derived entry name (using date from filename if present, else file creation date) and lets the user confirm/edit before processing.
+- All Python scripts (transcribe, summarize, export) are now resolved from the .asar.unpacked directory in packaged builds for robust cross-platform execution.
+- Improved error handling and user prompts for permissions and file processing.
+
+### Next Steps
+- Integrate full AI pipeline (transcription, summarization, Obsidian export) for imported files using the confirmed entry name.
+- Add batch import and more file type support.

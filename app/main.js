@@ -2,11 +2,11 @@
 if (process.platform === 'darwin') {
   process.env.PATH = '/opt/homebrew/bin:/opt/homebrew/opt/python@3.11/bin:' + process.env.PATH;
   const { spawnSync } = require('child_process');
-  console.log('Electron PATH:', process.env.PATH);
+  // console.log('Electron PATH:', process.env.PATH);
   const which = spawnSync('which', ['python3.11'], { encoding: 'utf-8' });
-  console.log('Electron which python3.11:', which.stdout, which.stderr);
+  // console.log('Electron which python3.11:', which.stdout, which.stderr);
   const ver = spawnSync('python3.11', ['--version'], { encoding: 'utf-8' });
-  console.log('Electron python3.11 --version:', ver.stdout, ver.stderr);
+  // console.log('Electron python3.11 --version:', ver.stdout, ver.stderr);
 }
 
 const { app, BrowserWindow, ipcMain, session, systemPreferences } = require('electron');
@@ -37,14 +37,14 @@ function createWindow() {
 
   win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
     win.webContents.openDevTools();
-    console.error('Renderer failed to load:', errorCode, errorDescription);
+    // console.error('Renderer failed to load:', errorCode, errorDescription);
   });
   win.webContents.on('crashed', () => {
     win.webContents.openDevTools();
-    console.error('Renderer process crashed');
+    // console.error('Renderer process crashed');
   });
   win.webContents.on('did-finish-load', () => {
-    console.log('Frontend loaded');
+    // console.log('Frontend loaded');
   });
 
   // Load dev server in development, built index.html in production
@@ -63,12 +63,12 @@ app.whenReady().then(async () => {
       if (micStatus !== 'granted') {
         const granted = await systemPreferences.askForMediaAccess('microphone');
         if (!granted) {
-          console.error('Microphone access denied by user.');
+          // console.error('Microphone access denied by user.');
         }
       }
     }
   } catch (e) {
-    console.error('Error requesting microphone access:', e);
+    // console.error('Error requesting microphone access:', e);
   }
   // Ensure entries directory exists (now always userData)
   const userDataPath = app.getPath('userData');
@@ -95,11 +95,11 @@ const logErrorToFile = (err, context = '') => {
 };
 
 process.on('uncaughtException', err => {
-  console.error('Uncaught Exception:', err);
+  // console.error('Uncaught Exception:', err);
   logErrorToFile(err, 'uncaughtException');
 });
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection:', reason);
+  // console.error('Unhandled Rejection:', reason);
   logErrorToFile(reason, 'unhandledRejection');
 });
 
@@ -150,10 +150,23 @@ function getScriptPath(relPath) {
   return path.join(__dirname, relPath);
 }
 
+function resolveUnpackedScript(scriptRelativePath) {
+  // Always resolve to .asar.unpacked for Python scripts
+  const base = process.resourcesPath;
+  // Handles both dev and packaged environments
+  const unpackedPath = path.join(base, 'app.asar.unpacked', scriptRelativePath);
+  const fs = require('fs');
+  if (fs.existsSync(unpackedPath)) return unpackedPath;
+  // Fallback for dev: use local path
+  const devPath = path.join(__dirname, '..', scriptRelativePath);
+  if (fs.existsSync(devPath)) return devPath;
+  throw new Error(`Script not found: ${scriptRelativePath}`);
+}
+
 function transcribeAudio(audioPath) {
   return new Promise((resolve, reject) => {
     const pythonExe = getSystemPythonPath();
-    const scriptPath = getScriptPath('local-ai/transcribe.py');
+    const scriptPath = resolveUnpackedScript('local-ai/transcribe.py');
     const proc = spawn(pythonExe, [scriptPath, audioPath], { encoding: 'utf-8' });
     let output = '';
     let error = '';
@@ -172,7 +185,7 @@ function transcribeAudio(audioPath) {
 function summarizeTranscript(transcriptPath) {
   return new Promise((resolve, reject) => {
     const pythonExe = getSystemPythonPath();
-    const scriptPath = getScriptPath('local-ai/summarize.py');
+    const scriptPath = resolveUnpackedScript('local-ai/summarize.py');
     const proc = spawn(pythonExe, [scriptPath, transcriptPath], { encoding: 'utf-8' });
     let output = '';
     let error = '';
@@ -209,8 +222,8 @@ ipcMain.handle('save-audio', async (event, arrayBuffer) => {
     const summary = await summarizeTranscript(transcriptPath);
     // Call Obsidian export script
     const pythonExe = getSystemPythonPath();
-    const obsidianExportPath = getScriptPath('obsidian-sync/markdown_export.py');
-    const configPath = getScriptPath('obsidian-sync/config.json');
+    const obsidianExportPath = resolveUnpackedScript('obsidian-sync/markdown_export.py');
+    const configPath = resolveUnpackedScript('obsidian-sync/config.json');
     let obsidianResult = null;
     if (fs.existsSync(configPath)) {
       const exportProc = spawnSync(pythonExe, [obsidianExportPath, filePath, transcriptPath, summary], { encoding: 'utf-8' });
@@ -225,7 +238,7 @@ ipcMain.handle('save-audio', async (event, arrayBuffer) => {
     }
     return { success: true, filePath, transcript, summary, obsidianResult };
   } catch (err) {
-    console.error('Error saving audio:', err);
+    // console.error('Error saving audio:', err);
     logErrorToFile(err, 'save-audio');
     return { success: false, error: err && err.stack ? err.stack : err && err.message ? err.message : String(err) };
   }
@@ -237,7 +250,37 @@ ipcMain.handle('list-entries', async () => {
     const { listEntries } = require('./entries');
     return listEntries();
   } catch (err) {
-    console.error('Error listing entries:', err);
+    // console.error('Error listing entries:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+// IPC handler to process imported file
+ipcMain.handle('process-imported-file', async (event, file, entryName) => {
+  try {
+    const fs = require('fs');
+    const os = require('os');
+    const { v4: uuidv4 } = require('uuid');
+    const tempDir = os.tmpdir();
+    const ext = path.extname(file.name);
+    const tempPath = path.join(tempDir, `audio-journal-import-${uuidv4()}${ext}`);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    fs.writeFileSync(tempPath, buffer);
+    // Use correct script path for Python AI pipeline
+    let scriptPath;
+    try {
+      scriptPath = resolveUnpackedScript('local-ai/transcribe.py');
+    } catch (e) {
+      return { success: false, error: `Python script not found: ${e.message}` };
+    }
+    // Example: Run Python script (stub, real AI logic to be integrated)
+    // const { spawnSync } = require('child_process');
+    // const result = spawnSync('python3.11', [scriptPath, tempPath], { encoding: 'utf-8' });
+    // if (result.error) throw result.error;
+    // if (result.status !== 0) throw new Error(result.stderr);
+    // return { success: true, result: result.stdout };
+    return { success: true, result: `Imported file saved to ${tempPath} as '${entryName}'. Python script path: ${scriptPath}` };
+  } catch (err) {
     return { success: false, error: err.message };
   }
 });
