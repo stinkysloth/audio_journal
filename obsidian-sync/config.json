@@ -1,3 +1,5 @@
 {
-  "vault_path": "/Users/llama/Documents/ObsidianVault"  
+  "vault_path": "/Users/llama/Documents/personal",
+  "template": "default",
+  "tags": ["audio-journal"]
 }

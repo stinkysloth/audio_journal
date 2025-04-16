@@ -19,7 +19,20 @@ function EntryViewer() {
   const [hasTranscript, setHasTranscript] = useState(false);
 
   useEffect(() => {
-    window.electronAPI.listEntries().then(setEntries);
+    const fetchEntries = async () => {
+      try {
+        const result = await window.electronAPI.listEntries();
+        if (result && result.success === false) {
+          // Log error to renderer console for debugging
+          console.error('Error from main process (listEntries):', result.error);
+        }
+        setEntries(result || []);
+      } catch (err) {
+        // Log error to renderer console for debugging
+        console.error('IPC call to listEntries failed:', err);
+      }
+    };
+    fetchEntries();
   }, []);
 
   // Collect all unique tags for filter dropdown

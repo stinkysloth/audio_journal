@@ -30,6 +30,21 @@ A local-first, AI-powered audio journaling desktop app for Mac. Features audio r
 ### Running tests
 - Run `pytest tests/` for backend logic
 
+## Python AI Environment (System Python Required)
+
+- The app requires Python 3.11+ installed on your system (macOS: `brew install python@3.11` or download from [python.org](https://www.python.org/downloads/)).
+- All AI features (transcription, summarization) use your system Python.
+- On first launch, the app checks for Python 3.11+ and required packages (`openai-whisper`, `torch`).
+- If missing, you will see a clear error and instructions to install dependencies.
+- Install dependencies with:
+  ```bash
+  pip3 install -r requirements.txt
+  ```
+
+## Packaging Notes
+- `package.json` uses `asarUnpack` for Python scripts only (not venv).
+- Electron always uses system Python for AI tasks.
+
 ## Packaging, Deployment, and Native Build Approach
 
 ### Overview

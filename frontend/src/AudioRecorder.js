@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { IconButton, Box, Typography, LinearProgress, Stack } from '@mui/material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import StopIcon from '@mui/icons-material/Stop';
 import SaveIcon from '@mui/icons-material/Save';
+import WaveformVisualizer from './WaveformVisualizer';
 
 /**
  * AudioRecorder component for recording and saving audio files.
@@ -18,13 +19,28 @@ function AudioRecorder() {
   const [transcript, setTranscript] = useState('');
   const [summary, setSummary] = useState('');
   const [obsidianMsg, setObsidianMsg] = useState('');
+  const [micPermission, setMicPermission] = useState(null); // null=unknown, true=granted, false=denied
   const mediaRecorderRef = useRef(null);
   const chunks = useRef([]);
+  const [audioStream, setAudioStream] = useState(null);
+
+  useEffect(() => {
+    if (!navigator.permissions) return;
+    navigator.permissions.query({ name: 'microphone' }).then((result) => {
+      setMicPermission(result.state === 'granted');
+      result.onchange = () => setMicPermission(result.state === 'granted');
+    }).catch(() => setMicPermission(null));
+  }, []);
 
   const startRecording = async () => {
     setStatus('Requesting microphone...');
+    if (micPermission === false) {
+      setStatus('Microphone access denied. Please enable it in System Settings.');
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setAudioStream(stream);
       mediaRecorderRef.current = new window.MediaRecorder(stream);
       chunks.current = [];
       mediaRecorderRef.current.ondataavailable = (e) => {
@@ -49,6 +65,10 @@ function AudioRecorder() {
       mediaRecorderRef.current.stop();
       setRecording(false);
       setStatus('Processing audio...');
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
+        setAudioStream(null);
+      }
     }
   };
 
@@ -78,6 +98,11 @@ function AudioRecorder() {
   return (
     <Box sx={{ mt: 4, textAlign: 'center' }}>
       <Typography variant="h5">Audio Journal Entry</Typography>
+      {micPermission === false && (
+        <Typography color="error" sx={{ mt: 2 }}>
+          Microphone access is blocked. Please enable it in System Settings &gt; Privacy &amp; Security &gt; Microphone.
+        </Typography>
+      )}
       <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
         <IconButton color="error" onClick={startRecording} disabled={recording} aria-label="Start Recording">
           <FiberManualRecordIcon fontSize="large" />
@@ -111,7 +136,12 @@ function AudioRecorder() {
           <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{obsidianMsg}</Typography>
         </Box>
       )}
-      {recording && <LinearProgress sx={{ mt: 2 }} />}
+      {recording && (
+        <>
+          <LinearProgress sx={{ mt: 2 }} />
+          <WaveformVisualizer audioStream={audioStream} isActive={recording} />
+        </>
+      )}
     </Box>
   );
 }

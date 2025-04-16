@@ -11,6 +11,12 @@
     "build": "cd frontend && npm run build && cd .. && cp frontend/public/preload.js frontend/build/preload.js && electron-builder --mac --x64 --dir",
     "dist": "cd frontend && npm run build && cd .. && cp frontend/public/preload.js frontend/build/preload.js && electron-builder --mac --x64"
   },
+  "build": {
+    "asarUnpack": [
+      "local-ai/*.py",
+      "obsidian-sync/*.py"
+    ]
+  },
   "dependencies": {
     "concurrently": "^8.2.0",
     "js-yaml": "^4.1.0",

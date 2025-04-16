@@ -8,6 +8,7 @@ import shutil
 from pathlib import Path
 import json
 from datetime import datetime
+import subprocess
 
 def load_vault_path():
     cfg = Path(__file__).parent / 'config.json'
@@ -15,6 +16,20 @@ def load_vault_path():
         raise RuntimeError(f"Vault config not found: {cfg}")
     with open(cfg) as f:
         return json.load(f)["vault_path"]
+
+def get_audio_duration(audio_path):
+    """Return duration in MM:SS (zero-padded) using ffprobe."""
+    try:
+        result = subprocess.run([
+            'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+            '-of', 'default=noprint_wrappers=1:nokey=1', audio_path
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+        seconds = float(result.stdout.strip())
+        mins = int(seconds // 60)
+        secs = int(round(seconds % 60))
+        return f"{mins:02}:{secs:02}"
+    except Exception:
+        return "00:00"
 
 def export_to_obsidian(audio_path, transcript_path, summary, tags=None):
     vault_path = Path(load_vault_path())
@@ -29,7 +44,8 @@ def export_to_obsidian(audio_path, transcript_path, summary, tags=None):
 
     # Markdown file
     date_str = datetime.now().strftime('%Y-%m-%d')
-    title = f"Audio Journal Entry {date_str}"
+    duration = get_audio_duration(str(audio_path))
+    title = f"{date_str} Audio Journal Entry ({duration})"
     md_name = f"audio-journal-{date_str}-{Path(audio_path).stem}.md"
     md_path = vault_path / md_name
     tags_str = ' '.join(f'#{t}' for t in (tags or []))

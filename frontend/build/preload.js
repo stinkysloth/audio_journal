@@ -14,4 +14,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
       reader.readAsArrayBuffer(audioBlob);
     });
   },
+  listEntries: () => ipcRenderer.invoke('list-entries'),
 });
