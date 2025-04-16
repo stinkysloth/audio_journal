@@ -8,6 +8,9 @@ A local-first, AI-powered audio journaling desktop app for Mac. Features audio r
 - Local summarization (LLM, Python, auto-run after transcript)
 - Export to Obsidian vault with tags and summaries
 - Browse, search, and summarize entries over time
+- **Entry Viewer:**
+  - Browse all journal entries within the app.
+  - See summaries, audio, transcripts, and tags in a modern UI.
 
 ## Setup
 
@@ -36,6 +39,10 @@ Our approach to packaging and deployment is designed to provide a seamless user 
 - **Native Integration:** We prioritize native integration with the Mac operating system to provide a cohesive user experience.
 - **Security:** We ensure that all dependencies and models are bundled securely to prevent any potential vulnerabilities.
 - **Ease of Use:** Our goal is to make the application easy to install and run, with minimal setup required.
+- **Obsidian Integration:**
+  - Each entry is exported as a Markdown note with embedded audio, transcript, and summary.
+  - Attachments are copied to the vault.
+  - A master index page (`Audio Journal Index.md`) is auto-updated with links to all entries.
 
 ## Packaging & Deployment
 

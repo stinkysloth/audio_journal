@@ -7,14 +7,19 @@
     "start": "concurrently \"npm:electron\" \"npm:react\"",
     "electron": "wait-on tcp:3000 && electron .",
     "react": "cd frontend && npm start",
-    "test": "pytest tests/"
+    "test": "pytest tests/",
+    "build": "cd frontend && npm run build && cd .. && cp frontend/public/preload.js frontend/build/preload.js && electron-builder --mac --x64 --dir",
+    "dist": "cd frontend && npm run build && cd .. && cp frontend/public/preload.js frontend/build/preload.js && electron-builder --mac --x64"
   },
   "dependencies": {
-    "electron": "^27.0.0",
     "concurrently": "^8.2.0",
+    "js-yaml": "^4.1.0",
     "wait-on": "^7.0.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^26.0.12"
+  },
   "author": "",
   "license": "MIT"
 }

@@ -34,11 +34,20 @@
 - `/build` directory will contain build/package scripts and configuration.
 - See README for build instructions.
 
+## Features
+- Audio recording UI
+- Whisper integration (local transcription)
+- LLM summarization (local)
+- Obsidian Markdown export after each entry, with attachments and summary
+- Master index page auto-updated with links to all entries
+- In-app entry viewer: browse, search, and view all journal entries (audio, transcript, summary)
+
 ## TODO
 - [x] Initial scaffolding
 - [x] Audio recording UI
 - [x] Whisper integration (local transcription)
 - [x] LLM summarization (local)
-- [ ] Obsidian export
-- [ ] Entry viewer
+- [x] Obsidian export (auto Markdown note, attachments)
+- [x] Master index page auto-update
+- [x] Entry viewer (in-app)
 - [ ] Aggregate summaries

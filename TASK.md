@@ -5,8 +5,9 @@
 - [x] Audio recording UI (2025-04-16)
 - [x] Local transcription with Whisper (2025-04-16)
 - [x] Local summarization with LLM (2025-04-16)
-- [ ] Obsidian Markdown export
-- [ ] Entry viewer
+- [x] Obsidian Markdown export (2025-04-16)
+- [x] Entry viewer
+- [x] Master index page auto-update (2025-04-16)
 - [ ] Aggregate summaries
 - [x] Native packaging: Electron + Python + models (2025-04-16)
 - [x] Build scripts for all-in-one Mac app (2025-04-16)

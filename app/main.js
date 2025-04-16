@@ -1,27 +1,69 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, session, systemPreferences } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const { ENTRIES_DIR } = require('./constants');
+const { listEntries } = require('./entries');
 
 function createWindow() {
+  const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_START_URL;
+  const preloadPath = isDev
+    ? path.join(__dirname, '../frontend/public/preload.js')
+    : path.join(__dirname, '../frontend/build/preload.js');
   const win = new BrowserWindow({
     width: 1000,
     height: 700,
     webPreferences: {
-      preload: path.join(__dirname, '../frontend/public/preload.js'),
+      preload: preloadPath,
       nodeIntegration: false,
       contextIsolation: true,
     },
     title: 'Audio Journal',
   });
-  win.loadURL('http://localhost:3000');
+
+  // Always open DevTools in production for debugging until stable
+  win.webContents.openDevTools();
+
+  win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    win.webContents.openDevTools();
+    console.error('Renderer failed to load:', errorCode, errorDescription);
+  });
+  win.webContents.on('crashed', () => {
+    win.webContents.openDevTools();
+    console.error('Renderer process crashed');
+  });
+  win.webContents.on('did-finish-load', () => {
+    console.log('Frontend loaded');
+  });
+
+  // Load dev server in development, built index.html in production
+  if (isDev) {
+    win.loadURL('http://localhost:3000');
+  } else {
+    win.loadFile(path.join(__dirname, '../frontend/build/index.html'));
+  }
 }
 
-app.whenReady().then(() => {
-  // Ensure entries directory exists
-  if (!fs.existsSync(ENTRIES_DIR)) {
-    fs.mkdirSync(ENTRIES_DIR, { recursive: true });
+// Request mic permission at startup
+app.whenReady().then(async () => {
+  try {
+    if (process.platform === 'darwin') {
+      const micStatus = systemPreferences.getMediaAccessStatus('microphone');
+      if (micStatus !== 'granted') {
+        const granted = await systemPreferences.askForMediaAccess('microphone');
+        if (!granted) {
+          console.error('Microphone access denied by user.');
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error requesting microphone access:', e);
+  }
+  // Ensure entries directory exists (now always userData)
+  const userDataPath = app.getPath('userData');
+  const entriesDir = path.join(userDataPath, 'entries');
+  if (!fs.existsSync(entriesDir)) {
+    fs.mkdirSync(entriesDir, { recursive: true });
   }
   createWindow();
 });
@@ -35,7 +77,7 @@ ipcMain.handle('save-audio', async (event, arrayBuffer) => {
   try {
     const buffer = Buffer.from(arrayBuffer);
     const filename = `audio-journal-entry-${Date.now()}.webm`;
-    const filePath = path.join(ENTRIES_DIR, filename);
+    const filePath = path.join(entriesDir, filename);
     fs.writeFileSync(filePath, buffer);
     // Call transcription script
     const transcript = await transcribeAudio(filePath);
@@ -44,8 +86,34 @@ ipcMain.handle('save-audio', async (event, arrayBuffer) => {
     fs.writeFileSync(transcriptPath, transcript, 'utf-8');
     // Call summarization script
     const summary = await summarizeTranscript(transcriptPath);
-    return { success: true, filePath, transcript, summary };
+    // Call Obsidian export script
+    const obsidianExportPath = path.join(__dirname, '../obsidian-sync/markdown_export.py');
+    const configPath = path.join(__dirname, '../obsidian-sync/config.json');
+    let obsidianResult = null;
+    if (fs.existsSync(configPath)) {
+      const exportProc = spawnSync('python3', [obsidianExportPath, filePath, transcriptPath, summary], { encoding: 'utf-8' });
+      if (exportProc.status === 0) {
+        obsidianResult = exportProc.stdout.trim();
+      } else {
+        obsidianResult = `Obsidian export failed: ${exportProc.stderr}`;
+      }
+    } else {
+      obsidianResult = 'Obsidian config not found; export skipped.';
+    }
+    return { success: true, filePath, transcript, summary, obsidianResult };
   } catch (err) {
+    console.error('Error saving audio:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+// IPC handler to list all journal entries
+ipcMain.handle('list-entries', async () => {
+  try {
+    const { listEntries } = require('./entries');
+    return listEntries();
+  } catch (err) {
+    console.error('Error listing entries:', err);
     return { success: false, error: err.message };
   }
 });

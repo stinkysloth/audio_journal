@@ -17,6 +17,7 @@ function AudioRecorder() {
   const [status, setStatus] = useState('');
   const [transcript, setTranscript] = useState('');
   const [summary, setSummary] = useState('');
+  const [obsidianMsg, setObsidianMsg] = useState('');
   const mediaRecorderRef = useRef(null);
   const chunks = useRef([]);
 
@@ -64,6 +65,9 @@ function AudioRecorder() {
           if (res.summary) {
             setSummary(res.summary);
           }
+          if (res.obsidianResult) {
+            setObsidianMsg(res.obsidianResult);
+          }
         } else {
           setStatus('Save failed.');
         }
@@ -99,6 +103,12 @@ function AudioRecorder() {
         <Box sx={{ mt: 3, textAlign: 'left' }}>
           <Typography variant="subtitle1" color="primary">Summary:</Typography>
           <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{summary}</Typography>
+        </Box>
+      )}
+      {obsidianMsg && (
+        <Box sx={{ mt: 3, textAlign: 'left' }}>
+          <Typography variant="subtitle2" color="secondary">Obsidian Export:</Typography>
+          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{obsidianMsg}</Typography>
         </Box>
       )}
       {recording && <LinearProgress sx={{ mt: 2 }} />}

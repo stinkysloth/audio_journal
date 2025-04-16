@@ -1,7 +1,14 @@
 const path = require('path');
 
-// Directory for all journal audio entries
-const ENTRIES_DIR = path.join(__dirname, '../entries');
+let ENTRIES_DIR;
+try {
+  // In Electron main process, app is available
+  const electron = require('electron');
+  ENTRIES_DIR = path.join(electron.app.getPath('userData'), 'entries');
+} catch (e) {
+  // For scripts or tests, fallback to a local folder
+  ENTRIES_DIR = path.join(__dirname, '../entries');
+}
 
 module.exports = {
   ENTRIES_DIR,
