@@ -1,74 +1,105 @@
 # Audio Journal (Mac Desktop)
 
-A local-first, AI-powered audio journaling desktop app for Mac. Features audio recording, transcription, summarization, and seamless integration with Obsidian.
+A **local-first, AI-powered audio journaling app** for Mac and cross-platform desktop. Your audio, transcripts, and summaries stay on your device—never in the cloud.
+
+---
+
+## Why Audio Journal?
+
+Most audio journaling apps send your private thoughts to the cloud for AI processing. **Audio Journal is different:**
+- **Local-first:** All audio, transcription, and summaries are processed and stored on your computer. Nothing leaves your device.
+- **Obsidian Integration:** Export entries as Markdown to your Obsidian vault, complete with tags, transcripts, and AI-generated summaries.
+- **Own your data:** No accounts, no subscriptions, no vendor lock-in.
+
+---
 
 ## Features
-- Record audio journal entries
-- Local transcription (Whisper, Python, auto-run after save)
-- Local summarization (LLM, Python, auto-run after transcript)
-- Export to Obsidian vault with tags and summaries
-- Browse, search, and summarize entries over time
-- **Entry Viewer:**
-  - Browse all journal entries within the app.
-  - See summaries, audio, transcripts, and tags in a modern UI.
-- **File Import Tab:** Import files from your computer, confirm/edit the derived entry name, and run them through the AI pipeline.
-- **Entry Naming:** If a date is found in the filename, it's used; otherwise, the file's creation date is used. You can edit/accept the name before processing.
-- **Python Script Path Robustness:** All AI-related Python scripts are now reliably run from the correct `.asar.unpacked` directory in production, preventing missing script errors.
-- **Improved Error Handling:** Enhanced user prompts for permissions and file processing errors.
+- **Record audio journal entries** directly from the app.
+- **Import existing audio files** (with smart entry naming).
+- **Automatic transcription** using OpenAI Whisper (runs locally).
+- **AI-powered summaries** using your choice of local LLM (e.g., GPT4All, llama.cpp).
+- **Browse and search** all your entries, transcripts, and summaries.
+- **Export to Obsidian** (or any Markdown-based system) with one click.
+- **Tag entries** for easy organization.
 
-## Setup
+---
+
+## Installation
 
 ### Requirements
-- Node.js (Electron/React)
-- Python 3.8+
-- `openai-whisper` Python package for transcription
-- Local LLM Python package for summarization (e.g., GPT4All, llama.cpp, or placeholder)
+- **macOS, Windows, or Linux**
+- **Node.js** (for building Electron app)
+- **Python 3.11+** (system Python)
+- Python packages: `openai-whisper`, `torch` (and optionally your preferred LLM for summarization)
 
-### How it works
-1. Record audio in the Electron app
-2. Audio is saved locally and transcribed using Whisper
-3. Transcript is summarized using a local LLM
-4. Both transcript and summary are shown in the UI
-5. (Coming soon) Export to Obsidian vault
+### 1. Clone the repository
+```bash
+git clone https://github.com/yourusername/audio-journal.git
+cd audio-journal
+```
 
-### Running tests
-- Run `pytest tests/` for backend logic
+### 2. Install Node/Electron dependencies
+```bash
+npm install
+cd frontend && npm install && cd ..
+```
 
-## Python AI Environment (System Python Required)
+### 3. Install Python dependencies
+```bash
+pip3 install -r requirements.txt
+```
 
-- The app requires Python 3.11+ installed on your system (macOS: `brew install python@3.11` or download from [python.org](https://www.python.org/downloads/)).
-- All AI features (transcription, summarization) use your system Python.
-- On first launch, the app checks for Python 3.11+ and required packages (`openai-whisper`, `torch`).
-- If missing, you will see a clear error and instructions to install dependencies.
-- Install dependencies with:
-  ```bash
-  pip3 install -r requirements.txt
-  ```
+### 4. Build and run the app
+```bash
+# Build frontend
+cd frontend && npm run build && cd ..
+# Package and launch Electron app
+npm run dist
+```
 
-## Packaging Notes
-- `package.json` uses `asarUnpack` for Python scripts only (not venv).
-- Electron always uses system Python for AI tasks.
+### 5. First launch setup
+- On first launch, the app will check for Python 3.11+ and required packages.
+- If missing, you'll see a clear error message with install instructions.
+- Set your Obsidian vault path in `obsidian-sync/config.json` before exporting.
 
-## Packaging, Deployment, and Native Build Approach
+---
 
-### Overview
-Our approach to packaging and deployment is designed to provide a seamless user experience while ensuring the security and integrity of the application.
+## Platform Notes
 
-### Key Considerations
-- **Native Integration:** We prioritize native integration with the Mac operating system to provide a cohesive user experience.
-- **Security:** We ensure that all dependencies and models are bundled securely to prevent any potential vulnerabilities.
-- **Ease of Use:** Our goal is to make the application easy to install and run, with minimal setup required.
-- **Obsidian Integration:**
-  - Each entry is exported as a Markdown note with embedded audio, transcript, and summary.
-  - Attachments are copied to the vault.
-  - A master index page (`Audio Journal Index.md`) is auto-updated with links to all entries.
+- **macOS:** Fully supported, tested on Apple Silicon and Intel Macs.
+- **Windows/Linux:** Supported, but you must have Python 3.11+ and dependencies installed system-wide. Some features (like microphone permissions) may require additional setup.
+- **Python:** You must use a system Python install, not a virtual environment, so the Electron app can invoke it.
 
-## Packaging & Deployment
+---
 
-- **Native Mac App:** Distributed as a single `.app` (or DMG installer) using Electron's packaging tools.
-- **All-in-one:** Node, Python, AI scripts, and models are bundled. No Docker or external installs required.
-- **Python scripts** use PyInstaller for standalone binaries.
-- On first run, models are downloaded if not present.
+## FAQ
 
-### Building the App
-See `/build/README.md` for build and packaging instructions.
+**Q: Is my data private?**  
+A: Yes. All audio, transcripts, and summaries are processed and stored locally. Nothing is sent to any server.
+
+**Q: Can I use my own AI model?**  
+A: Yes! You can configure the summarization step to use any local LLM that exposes a Python API.
+
+**Q: Does it work with Obsidian?**  
+A: Yes, you can export entries as Markdown files directly into your Obsidian vault.
+
+**Q: Can I import old audio files?**  
+A: Yes, use the Import tab to add and transcribe existing audio.
+
+---
+
+## Roadmap
+- Batch import
+- Customizable summary prompts
+- More local LLM integrations
+- Mobile companion app
+
+---
+
+## Contributing
+Pull requests and issues are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+## License
+MIT

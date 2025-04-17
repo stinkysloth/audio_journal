@@ -1,3 +1,10 @@
+// ---- PATCH: Ensure ffmpeg is in PATH for all subprocesses ----
+const homebrewBin = '/opt/homebrew/bin';
+const usrLocalBin = '/usr/local/bin';
+const pathParts = [homebrewBin, usrLocalBin, process.env.PATH || ''];
+process.env.PATH = pathParts.filter(Boolean).join(':');
+// -------------------------------------------------------------
+
 // Patch PATH for Homebrew Python on macOS and add debug logging
 if (process.platform === 'darwin') {
   process.env.PATH = '/opt/homebrew/bin:/opt/homebrew/opt/python@3.11/bin:' + process.env.PATH;
@@ -16,6 +23,8 @@ const { spawn, spawnSync } = require('child_process');
 const { ENTRIES_DIR } = require('./constants');
 const { listEntries } = require('./entries');
 
+console.time('App Startup');
+
 function createWindow() {
   const isDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_START_URL;
   const preloadPath = isDev
@@ -32,8 +41,9 @@ function createWindow() {
     title: 'Audio Journal',
   });
 
-  // Always open DevTools in production for debugging until stable
-  win.webContents.openDevTools();
+  if (process.env.NODE_ENV === 'development') {
+    win.webContents.openDevTools();
+  }
 
   win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
     win.webContents.openDevTools();
@@ -57,26 +67,11 @@ function createWindow() {
 
 // Request mic permission at startup
 app.whenReady().then(async () => {
-  try {
-    if (process.platform === 'darwin') {
-      const micStatus = systemPreferences.getMediaAccessStatus('microphone');
-      if (micStatus !== 'granted') {
-        const granted = await systemPreferences.askForMediaAccess('microphone');
-        if (!granted) {
-          // console.error('Microphone access denied by user.');
-        }
-      }
-    }
-  } catch (e) {
-    // console.error('Error requesting microphone access:', e);
-  }
-  // Ensure entries directory exists (now always userData)
-  const userDataPath = app.getPath('userData');
-  const entriesDir = path.join(userDataPath, 'entries');
-  if (!fs.existsSync(entriesDir)) {
-    fs.mkdirSync(entriesDir, { recursive: true });
-  }
   createWindow();
+  app.on('activate', function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+  console.timeEnd('App Startup');
 });
 
 app.on('window-all-closed', () => {

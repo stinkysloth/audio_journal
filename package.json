@@ -13,8 +13,8 @@
   },
   "build": {
     "asarUnpack": [
-      "local-ai/*.py",
-      "obsidian-sync/*.py"
+      "local-ai/**",
+      "obsidian-sync/**"
     ]
   },
   "dependencies": {
